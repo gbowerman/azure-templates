@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 # update this list to current versions before running the script
 computeApiVersion = '2016-03-30'
-networkApiVersion = '2015-06-15'
+networkApiVersion = '2016-03-30'
 storageApiVersion = '2015-06-15'
 insightsApiVersion = '2015-04-01'
 
@@ -56,15 +56,15 @@ for resource in templateData['resources']:
         if resource['type'] == 'Microsoft.Compute/virtualMachineScaleSets':
             resource['properties']['overprovision'] = 'true'
 
-    if resource['type'].startswith('Microsoft.Network'):
+    elif resource['type'].startswith('Microsoft.Network'):
         containsNetworkResource = True
         resource['apiVersion'] = "[variables('networkApiVersion')]"
 
-    if resource['type'].startswith('Microsoft.Storage'):
+    elif resource['type'].startswith('Microsoft.Storage'):
         containsStorageResource = True
         resource['apiVersion'] = "[variables('storageApiVersion')]"
 
-    if resource['type'].startswith('Microsoft.Insights'):
+    elif resource['type'].startswith('Microsoft.Insights'):
         containsInsightsResource = True
         resource['apiVersion'] = "[variables('insightsApiVersion')]"
         
