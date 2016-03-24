@@ -13,7 +13,7 @@ from collections import OrderedDict
 # update this list to current versions before running the script
 computeApiVersion = '2016-03-30'
 networkApiVersion = '2016-03-30'
-storageApiVersion = '2016-01-01'
+storageApiVersion = '2015-06-15'
 insightsApiVersion = '2015-04-01'
 
 overprovisionValue = 'true' # set VMSS overprovision value, default is true
