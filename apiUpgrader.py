@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Python script to update API versions in Azure Resource Manager templates
 """
 Copyright (c) 2016, Guy Bowerman
