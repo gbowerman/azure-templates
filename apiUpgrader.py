@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 # update this list to current versions before running the script
 computeApiVersion = '2016-03-30'
-networkApiVersion = '2016-03-30'
+networkApiVersion = '2016-06-01'
 storageApiVersion = '2015-06-15'
 insightsApiVersion = '2015-04-01'
 
@@ -79,4 +79,3 @@ if containsInsightsResource == True:
     
 # print the upgraded JSON template to standard out
 print(json.dumps(templateData, sort_keys=False, indent=2, separators=(',', ': ')))
-
