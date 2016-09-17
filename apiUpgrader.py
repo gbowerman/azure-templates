@@ -12,7 +12,7 @@ from collections import OrderedDict
 # update this list to current versions before running the script
 computeApiVersion = '2016-03-30'
 networkApiVersion = '2016-06-01'
-storageApiVersion = '2015-06-15'
+storageApiVersion = '2016-01-01'
 insightsApiVersion = '2015-04-01'
 
 overprovisionValue = 'true' # set VMSS overprovision value, default is true
@@ -62,6 +62,9 @@ for resource in templateData['resources']:
     elif resource['type'].startswith('Microsoft.Storage'):
         containsStorageResource = True
         resource['apiVersion'] = "[variables('storageApiVersion')]"
+        resource['kind'] = "Storage"
+        resource['properties'] = {}
+        resource['sku'] = {"name": "[variables('storageAccountType')]"}
 
     elif resource['type'].startswith('Microsoft.Insights'):
         containsInsightsResource = True
