@@ -1,9 +1,15 @@
-# Python script to update API versions in Azure Resource Manager templates
-"""
-Copyright (c) 2016, Guy Bowerman
-Description: Graphical dashboard to show and set Azure VM Scale Set properties
-License: MIT (see LICENSE.txt file for details)
-"""
+# Python script to update API versions in Azure Resource Manager templates and make simple compatibility updates
+# 
+# Usage: python apiUpgrader.py source_template.json > output_template.json
+#
+# Note: The script won't catch everything, for example extensions which make references based on earlier APIs.
+# The script will also make mistakes if your source template sets advanced properties that the script didn't check for.
+# Thereforee check the output manually and test before relying on the output scripts.
+# 
+# Author: guybo@outlook.com
+# 
+# Last update 9/17/2016
+
 import json
 import sys
 import os.path
@@ -15,7 +21,7 @@ networkApiVersion = '2016-06-01'
 storageApiVersion = '2016-01-01'
 insightsApiVersion = '2015-04-01'
 
-overprovisionValue = 'true' # set VMSS overprovision value, default is true
+overprovision_value = 'true'  # default overprovision value for VMSS
 
 # booleans which get switched on when a resource is discovered
 containsComputeResource = False
@@ -47,13 +53,14 @@ except FileNotFoundError:
 
 # templateData is now loaded with the ARM template, with order preserved
 
-# loop through resources setting current API versions
+# loop through resources setting current API versions and making any compatibility upgrades
 for resource in templateData['resources']:
     if resource['type'].startswith('Microsoft.Compute'):
         containsComputeResource = True
         resource['apiVersion'] = "[variables('computeApiVersion')]"
         if resource['type'] == 'Microsoft.Compute/virtualMachineScaleSets':
-            resource['properties']['overprovision'] = 'true'
+            if 'overprovision' not in resource['properties']:
+                resource['properties']['overprovision'] = overprovision_value
 
     elif resource['type'].startswith('Microsoft.Network'):
         containsNetworkResource = True
