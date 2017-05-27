@@ -62,8 +62,9 @@ for resource in templateData['resources']:
         containsComputeResource = True
         resource['apiVersion'] = "[variables('computeApiVersion')]"
         if resource['type'] == 'Microsoft.Compute/virtualMachineScaleSets':
-            if 'overprovision' not in resource['properties']:
-                resource['properties']['overprovision'] = overprovision_value
+            if 'properties' in resource:
+                if 'overprovision' not in resource['properties']:
+                    resource['properties']['overprovision'] = overprovision_value
 
     elif resource['type'].startswith('Microsoft.Network'):
         containsNetworkResource = True
