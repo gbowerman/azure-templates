@@ -6,7 +6,7 @@ LOCATION=$3
 CONTAINERNAME=$4
 
 SASSTART=`date +%Y-%m-%d`'T00:00:00Z'
-EXPIRY=`date -d "+30 days" +%Y-%m-%d`'T00:00:00Z'
+EXPIRY=`date -d "+90 days" +%Y-%m-%d`'T00:00:00Z'
 SASNAME=$CONTAINERNAME'sas'
 
 # create the resource group (keeps going if already exists)
