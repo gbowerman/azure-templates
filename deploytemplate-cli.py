@@ -1,5 +1,5 @@
 ''' deploytemplate.py - simple commandline deployment of a github template'''
-# Takes a deployment template URI and a local parameters file and deploys it
+# takes a deployment template URI and a local parameters file and deploys it
 # to do:
 # - checkin to a github repo
 import argparse
@@ -39,12 +39,11 @@ def main():
         with open(params) as params_file:
             param_data = json.load(params_file)
     except FileNotFoundError:
-        sys.exit('Error: Expecting ' + params + ' in current folder')
+        sys.error('Error: Expecting ' + params + ' in current folder')
 
     # prep Haikunator
     haikunator = Haikunator()
 
-    # get a current access token from your local Azure CLI environment
     access_token = azurerm.get_access_token_from_cli()
     if subscription_id is None:
         subscription_id = azurerm.get_subscription_from_cli()
