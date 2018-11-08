@@ -1,7 +1,6 @@
 ''' deploytemplate.py - simple commandline deployment of a github template'''
 # takes a deployment template URI and a local parameters file and deploys it
-# to do:
-# - checkin to a github repo
+
 import argparse
 import azurerm
 from haikunator import Haikunator
