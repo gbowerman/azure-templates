@@ -1,3 +1,12 @@
+# deploytemplate.py and deploytemplate-cli.py
+Python scripts to deploy an Azure template from a github repo, with a local parameters.json file
+
+If running in an Azure cloud shell environment use deploytemplate-cli.py - it will authenticate to Azure using an MSI endpoint.
+
+If running in an active Azure CLI 2.0 environment use deploytemplate-cli.py - it will authenticate using the CLI cache.
+
+If running in other environemnts create an azurermtemplate.json to authenticate.
+
 # ARM Template API Updater
 Python script to update API versions in Azure Resource Manager templates
 
