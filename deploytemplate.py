@@ -1,6 +1,6 @@
-''' deploytemplate-cli.py - simple commandline deployment of a github template'''
+''' deploytemplate.py - simple commandline deployment of a github template'''
 # takes a deployment template URI and a local parameters file and deploys it
-# requires an active CLI environment (for example Azure shell) to run
+# requires an azurermconfig.json file containing service principal account to run
 
 import argparse
 import azurerm
@@ -34,6 +34,22 @@ def main():
     location = args.location
     subscription_id = args.sub
 
+    # Load Azure app defaults
+    try:
+        with open('azurermconfig.json') as configFile:
+            configData = json.load(configFile)
+    except FileNotFoundError:
+        print("Error: Expecting azurermconfig.json in current folder")
+        sys.exit()
+
+    tenant_id = configData['tenantId']
+    app_id = configData['appId']
+    app_secret = configData['appSecret']
+    subscription_id = configData['subscriptionId']
+
+    # authenticate
+    access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
+
     # load parameters file
     try:
         with open(params) as params_file:
@@ -44,25 +60,23 @@ def main():
     # prep Haikunator
     haikunator = Haikunator()
 
-    access_token = azurerm.get_access_token_from_cli()
-    if subscription_id is None:
-        subscription_id = azurerm.get_subscription_from_cli()
-
     # create resource group if not specified
     if rgname is None:
         rgname = haikunator.haikunate()
-        ret = azurerm.create_resource_group(access_token, subscription_id, rgname, location)
+        ret = azurerm.create_resource_group(
+            access_token, subscription_id, rgname, location)
         print(ret)
     print('Resource group:' + rgname)
 
-    deployment_name = haikunator.haikunate() 
+    deployment_name = haikunator.haikunate()
     print('Deployment name:' + deployment_name)
 
     # deploy template and print response
     deploy_return = azurerm.deploy_template_uri(
         access_token, subscription_id, rgname, deployment_name, template_uri, param_data)
 
-    print(json.dumps(deploy_return.json(), sort_keys=False, indent=2, separators=(',', ': ')))
+    print(json.dumps(deploy_return.json(), sort_keys=False,
+                     indent=2, separators=(',', ': ')))
 
 
 if __name__ == "__main__":
