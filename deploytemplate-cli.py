@@ -11,22 +11,23 @@ import sys
 
 def main():
     '''Main routine.'''
-
     # validate command line arguments
-    argParser = argparse.ArgumentParser()
-
-    argParser.add_argument('--uri', '-u', required=True,
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--uri', '-u', required=True,
                            action='store', help='Template URI')
-    argParser.add_argument('--params', '-p', required=True,
+    argparser.add_argument('--params', '-f', required=True,
                            action='store', help='Parameters json file')
-    argParser.add_argument('--location', '-l', required=True,
+    argparser.add_argument('--location', '-l', required=True,
                            action='store', help='Location, e.g. eastus')
-    argParser.add_argument('--rg', '-g', required=False,
+    argparser.add_argument('--rg', '-g', required=False,
                            action='store', help='Resource Group name')
-    argParser.add_argument('--sub', '-s', required=False,
+    argparser.add_argument('--sub', '-s', required=False,
                            action='store', help='Subscription ID')
-
-    args = argParser.parse_args()
+    argparser.add_argument('--genparams', '-p', required=False,
+                           action='store', help='Comma separated list of parameters to generate strings for')
+    argparser.add_argument('--debug', '-d', required=False, action='store_true', default=False,
+                           help='Debug mode: print additional deployment')
+    args = argparser.parse_args()
 
     template_uri = args.uri
     params = args.params
@@ -39,7 +40,7 @@ def main():
         with open(params) as params_file:
             param_data = json.load(params_file)
     except FileNotFoundError:
-        sys.error('Error: Expecting ' + params + ' in current folder')
+        sys.exit('Error: Expecting ' + params + ' in current folder')
 
     # prep Haikunator
     haikunator = Haikunator()
@@ -48,21 +49,34 @@ def main():
     if subscription_id is None:
         subscription_id = azurerm.get_subscription_from_cli()
 
+    # if there is a genparams argument generate values and merge the list
+    if args.genparams is not None:
+        newdict = {}
+        genlist = args.genparams.split(',')
+        for param in genlist:
+            # generate a random prhase, include caps and puncs in case it's a passwd
+            newval = haikunator.haikunate(delimiter='-').title()
+            newdict[param] = {'value': newval}
+    params = {**param_data, **newdict}
+
     # create resource group if not specified
     if rgname is None:
         rgname = haikunator.haikunate()
-        ret = azurerm.create_resource_group(access_token, subscription_id, rgname, location)
-        print(ret)
-    print('Resource group:' + rgname)
+        ret = azurerm.create_resource_group(
+            access_token, subscription_id, rgname, location)
+        print('Creating resource group: ' + rgname + ', location:', location + ', return code:', ret)
 
-    deployment_name = haikunator.haikunate() 
-    print('Deployment name:' + deployment_name)
+    deployment_name = haikunator.haikunate()
 
     # deploy template and print response
     deploy_return = azurerm.deploy_template_uri(
-        access_token, subscription_id, rgname, deployment_name, template_uri, param_data)
-
-    print(json.dumps(deploy_return.json(), sort_keys=False, indent=2, separators=(',', ': ')))
+        access_token, subscription_id, rgname, deployment_name, template_uri, params)
+    print('Deployment name: ' + deployment_name + ', return code:', deploy_return)
+    if args.debug is True:
+        print(json.dumps(deploy_return.json(), sort_keys=False,
+                         indent=2, separators=(',', ': ')))
+    if args.genparams is not None:
+        print('Generated parameters: ', json.dumps(newdict))
 
 
 if __name__ == "__main__":
