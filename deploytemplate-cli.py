@@ -78,6 +78,14 @@ def main():
     if args.genparams is not None:
         print('Generated parameters: ', json.dumps(newdict))
 
+    # show deployment status
+    if args.debug is True:
+        print('Deployment status:')
+        deploy_return = azurerm.show_deployment(
+            access_token, subscription_id, rgname, deployment_name)
+        print(json.dumps(deploy_return, sort_keys=False,
+                         indent=2, separators=(',', ': ')))
 
+                         
 if __name__ == "__main__":
     main()

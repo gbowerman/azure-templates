@@ -21,7 +21,7 @@ def main():
                            action='store', help='Location, e.g. eastus')
     argparser.add_argument('--rg', '-g', required=False,
                            action='store', help='Resource Group name')
-    argparser.add_argument('--sub', '-s', required=True,
+    argparser.add_argument('--sub', '-s', required=False,
                            action='store', help='Subscription ID')
     argparser.add_argument('--genparams', '-p', required=False,
                            action='store', help='Comma separated list of parameters to generate strings for')
@@ -45,7 +45,8 @@ def main():
     tenant_id = configdata['tenantId']
     app_id = configdata['appId']
     app_secret = configdata['appSecret']
-    subscription_id = configdata['subscriptionId']
+    if subscription_id is None:
+        subscription_id = configdata['subscriptionId']
 
     # authenticate
     access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
@@ -75,19 +76,29 @@ def main():
         rgname = haikunator.haikunate()
         ret = azurerm.create_resource_group(
             access_token, subscription_id, rgname, location)
-        print('Creating resource group: ' + rgname + ', location:', location + ', return code:', ret)
+        print('Creating resource group: ' + rgname +
+              ', location:', location + ', return code:', ret)
 
     deployment_name = haikunator.haikunate()
 
     # deploy template and print response
     deploy_return = azurerm.deploy_template_uri(
         access_token, subscription_id, rgname, deployment_name, template_uri, params)
-    print('Deployment name: ' + deployment_name + ', return code:', deploy_return)
+    print('Deployment name: ' + deployment_name +
+          ', return code:', deploy_return)
     if args.debug is True:
         print(json.dumps(deploy_return.json(), sort_keys=False,
                          indent=2, separators=(',', ': ')))
     if args.genparams is not None:
         print('Generated parameters: ', json.dumps(newdict))
+
+    # show deployment status
+    if args.debug is True:
+        print('Deployment status:')
+        deploy_return = azurerm.show_deployment(
+            access_token, subscription_id, rgname, deployment_name)
+        print(json.dumps(deploy_return, sort_keys=False,
+                         indent=2, separators=(',', ': ')))
 
 
 if __name__ == "__main__":
