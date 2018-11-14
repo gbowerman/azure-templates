@@ -6,6 +6,8 @@ import argparse
 import azurerm
 from haikunator import Haikunator
 import json
+import os
+import time
 import sys
 
 
@@ -25,6 +27,8 @@ def main():
                            action='store', help='Subscription ID')
     argparser.add_argument('--genparams', '-p', required=False,
                            action='store', help='Comma separated list of parameters to generate strings for')
+    argparser.add_argument('--wait', '-w', required=False, action='store_true', default=False,
+                           help='Wait for deployment to complete and time it')
     argparser.add_argument('--debug', '-d', required=False, action='store_true', default=False,
                            help='Debug mode: print additional deployment')
     args = argparser.parse_args()
@@ -35,21 +39,26 @@ def main():
     location = args.location
     subscription_id = args.sub
 
-    # Load Azure app defaults
-    try:
-        with open('azurermconfig.json') as configfile:
-            configdata = json.load(configfile)
-    except FileNotFoundError:
-        sys.exit('Error: Expecting azurermconfig.json in current folder')
+    # if in Azure cloud shell, authenticate using the MSI endpoint
+    if 'ACC_CLOUD' in os.environ and 'MSI_ENDPOINT' in os.environ:
+        access_token = azurerm.get_access_token_from_cli()
+        if subscription_id is None:
+            subscription_id = azurerm.get_subscription_from_cli()
+    else: # load service principal details from a config file        
+        try:
+            with open('azurermconfig.json') as configfile:
+                configdata = json.load(configfile)
+        except FileNotFoundError:
+            sys.exit('Error: Expecting azurermconfig.json in current folder')
 
-    tenant_id = configdata['tenantId']
-    app_id = configdata['appId']
-    app_secret = configdata['appSecret']
-    if subscription_id is None:
-        subscription_id = configdata['subscriptionId']
+        tenant_id = configdata['tenantId']
+        app_id = configdata['appId']
+        app_secret = configdata['appSecret']
+        if subscription_id is None:
+            subscription_id = configdata['subscriptionId']
 
-    # authenticate
-    access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
+        # authenticate
+        access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
 
     # load parameters file
     try:
@@ -81,6 +90,9 @@ def main():
 
     deployment_name = haikunator.haikunate()
 
+    # measure time from beginning of deployment call (after creating resource group etc.)
+    start_time = time.time()
+
     # deploy template and print response
     deploy_return = azurerm.deploy_template_uri(
         access_token, subscription_id, rgname, deployment_name, template_uri, params)
@@ -99,7 +111,22 @@ def main():
             access_token, subscription_id, rgname, deployment_name)
         print(json.dumps(deploy_return, sort_keys=False,
                          indent=2, separators=(',', ': ')))
+    
+    # wait for deployment to complete
+    if args.wait is True:
+        print('Waiting for provisioning to complete..')
+        provisioning_state = ''
+        while True:
+            time.sleep(10)
+            deploy_return = azurerm.show_deployment(
+                access_token, subscription_id, rgname, deployment_name) 
+            provisioning_state = deploy_return['properties']['provisioningState']
+            if provisioning_state != 'Running':
+                break
+        print('Provisioning state:', provisioning_state)
 
-
+    elapsed_time = time.time() - start_time
+    print('Elapsed time:', elapsed_time)
+    
 if __name__ == "__main__":
     main()
