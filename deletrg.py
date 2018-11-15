@@ -1,4 +1,4 @@
-'''delete_rg.py - example script to delete an Azure Resource Group'''
+'''deleterg.py - example script to delete an Azure Resource Group'''
 import json
 import os
 import sys
@@ -28,8 +28,7 @@ def main():
         tenant_id = configdata['tenantId']
         app_id = configdata['appId']
         app_secret = configdata['appSecret']
-        if subscription_id is None:
-            subscription_id = configdata['subscriptionId']
+        subscription_id = configdata['subscriptionId']
 
         # authenticate
         access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
