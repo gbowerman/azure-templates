@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ''' deploytemplate.py - simple commandline deployment of a github template'''
 # takes a deployment template URI and a local parameters file and deploys it
 # requires an azurermconfig.json file containing service principal account to run
@@ -6,7 +7,6 @@ import argparse
 import azurerm
 from haikunator import Haikunator
 import json
-import os
 import time
 import sys
 
@@ -39,26 +39,21 @@ def main():
     location = args.location
     subscription_id = args.sub
 
-    # if in Azure cloud shell, authenticate using the MSI endpoint
-    if 'ACC_CLOUD' in os.environ and 'MSI_ENDPOINT' in os.environ:
-        access_token = azurerm.get_access_token_from_cli()
-        if subscription_id is None:
-            subscription_id = azurerm.get_subscription_from_cli()
-    else: # load service principal details from a config file        
-        try:
-            with open('azurermconfig.json') as configfile:
-                configdata = json.load(configfile)
-        except FileNotFoundError:
-            sys.exit('Error: Expecting azurermconfig.json in current folder')
+    # Load Azure app defaults
+    try:
+        with open('azurermconfig.json') as configfile:
+            configdata = json.load(configfile)
+    except FileNotFoundError:
+        sys.exit('Error: Expecting azurermconfig.json in current folder')
 
-        tenant_id = configdata['tenantId']
-        app_id = configdata['appId']
-        app_secret = configdata['appSecret']
-        if subscription_id is None:
-            subscription_id = configdata['subscriptionId']
+    tenant_id = configdata['tenantId']
+    app_id = configdata['appId']
+    app_secret = configdata['appSecret']
+    if subscription_id is None:
+        subscription_id = configdata['subscriptionId']
 
-        # authenticate
-        access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
+    # authenticate
+    access_token = azurerm.get_access_token(tenant_id, app_id, app_secret)
 
     # load parameters file
     try:
@@ -79,6 +74,7 @@ def main():
             newval = haikunator.haikunate(delimiter='-').title()
             newdict[param] = {'value': newval}
     params = {**param_data, **newdict}
+    print('Generated parameters: ', json.dumps(newdict))
 
     # create resource group if not specified
     if rgname is None:
@@ -98,11 +94,12 @@ def main():
         access_token, subscription_id, rgname, deployment_name, template_uri, params)
     print('Deployment name: ' + deployment_name +
           ', return code:', deploy_return)
+    if 'Response [20' not in str(deploy_return):
+        print('Return from deployment: ', deploy_return.text)
+        sys.exit('Deployment failed. Exiting.. ')
     if args.debug is True:
         print(json.dumps(deploy_return.json(), sort_keys=False,
                          indent=2, separators=(',', ': ')))
-    if args.genparams is not None:
-        print('Generated parameters: ', json.dumps(newdict))
 
     # show deployment status
     if args.debug is True:
@@ -116,14 +113,17 @@ def main():
     if args.wait is True:
         print('Waiting for provisioning to complete..')
         provisioning_state = ''
-        while True:
-            time.sleep(10)
-            deploy_return = azurerm.show_deployment(
-                access_token, subscription_id, rgname, deployment_name) 
-            provisioning_state = deploy_return['properties']['provisioningState']
-            if provisioning_state != 'Running':
-                break
-        print('Provisioning state:', provisioning_state)
+        try:
+            while True:
+                time.sleep(10)
+                deploy_return = azurerm.show_deployment(
+                    access_token, subscription_id, rgname, deployment_name) 
+                provisioning_state = deploy_return['properties']['provisioningState']
+                if provisioning_state != 'Running':
+                    break
+            print('Provisioning state:', provisioning_state)
+        except KeyError:
+            print('Deployment failure:', deploy_return)
 
     elapsed_time = time.time() - start_time
     print('Elapsed time:', elapsed_time)

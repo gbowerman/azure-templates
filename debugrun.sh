@@ -1,1 +1,1 @@
-python deploytemplate.py -u https://raw.githubusercontent.com/gbowerman/azure-minecraft/master/azure-marketplace/minecraft-server-ubuntu/mainTemplate.json -f parameters.json -p adminPassword,dnsNameForPublicIP -l westus2 --debug
+./deploytemplate.py -u https://raw.githubusercontent.com/gbowerman/azure-minecraft/master/azure-marketplace/minecraft-server-ubuntu/mainTemplate.json -f parameters.json -p adminPassword,dnsNameForPublicIP -l westus2 --debug
