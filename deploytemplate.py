@@ -73,8 +73,10 @@ def main():
             # generate a random prhase, include caps and puncs in case it's a passwd
             newval = haikunator.haikunate(delimiter='-').title()
             newdict[param] = {'value': newval}
-    params = {**param_data, **newdict}
-    print('Generated parameters: ', json.dumps(newdict))
+        params = {**param_data, **newdict}
+    else:
+        params = param_data
+
 
     # create resource group if not specified
     if rgname is None:
