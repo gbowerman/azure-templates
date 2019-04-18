@@ -28,12 +28,12 @@ def deleterg():
     if selected:
         for index in selected:
             rgname = rglistbox.get(index)
-            # print(f'About to delete: {rgname}')
+            print(f'About to delete: {rgname}')
             delete_op = client.resource_groups.delete(rgname)
             status = f'{rgname} delete returned {delete_op.response}'
             statuslbl.configure(text=status)
 
-deletebtn = Button(window, text="Delete", command=deleterg)
+deletebtn = Button(window, text="Delete", command=deleterg, bg='#F8F8FF')
 
 
 def load_resource_groups(client, listbox):
@@ -50,6 +50,7 @@ def main():
     '''main routine - start by customizing GUI'''
     window.title('Azure resource group tool')
     window.geometry('350x200')
+    window.configure(background='#B0E0E6')
     rglistbox.grid(column=0, row=0)
     load_resource_groups(client, rglistbox) 
     deletebtn.grid(column=1, row=0)
